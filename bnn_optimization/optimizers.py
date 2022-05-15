@@ -43,7 +43,7 @@ class Bop(tf.keras.optimizers.Optimizer):
     - [Latent Weights Do Not Exist: Rethinking Binarized Neural Network Optimization](https://arxiv.org/abs/1906.02107)
     """
 
-    def __init__(self, fp_optimizer, threshold=1e-7, gamma=1e-2, name="Bop", **kwargs):
+    def __init__(self, fp_optimizer, threshold=20e-2, gamma=10e-4, gamma2=10e-4, name="Bop", **kwargs):
         super().__init__(name=name, **kwargs)
 
         if not isinstance(fp_optimizer, tf.keras.optimizers.Optimizer):
@@ -54,6 +54,7 @@ class Bop(tf.keras.optimizers.Optimizer):
         self.fp_optimizer = fp_optimizer
         self._set_hyper("threshold", threshold)
         self._set_hyper("gamma", gamma)
+        self._set_hyper("gamma2", gamma2)
 
         logger.warning(
             "Please use `larq.optimizers.Bop` instead of this implementation to ensure you have the most up-to-date version."
@@ -63,6 +64,7 @@ class Bop(tf.keras.optimizers.Optimizer):
         for var in var_list:
             if self.is_binary(var):
                 self.add_slot(var, "m")
+                self.add_slot(var, "v")
 
     def apply_gradients(self, grads_and_vars, name=None):
         bin_grads_and_vars, fp_grads_and_vars = [], []
@@ -98,13 +100,18 @@ class Bop(tf.keras.optimizers.Optimizer):
     def _resource_apply_dense(self, grad, var):
         var_dtype = var.dtype.base_dtype
         gamma = self._get_decayed_hyper("gamma", var_dtype)
+        gamma2 = self._get_decayed_hyper("gamma2", var_dtype)
         threshold = self._get_decayed_hyper("threshold", var_dtype)
         m = self.get_slot(var, "m")
+        v = self.get_slot(var, "v")
 
         m_t = tf.compat.v1.assign(
             m, (1 - gamma) * m + gamma * grad, use_locking=self._use_locking
         )
-        var_t = lq.math.sign(-tf.sign(var * m_t - threshold) * var)
+        v_t = tf.compat.v1.assign(
+            v, (1 - gamma2) * v + gamma2 * tf.math.square(grad - m_t), use_locking=self._use_locking
+        )
+        var_t = lq.math.sign(-tf.sign(var * m_t - threshold * tf.math.sqrt(v_t)) * var)
         return tf.compat.v1.assign(var, var_t, use_locking=self._use_locking).op
 
     @staticmethod
@@ -116,6 +123,7 @@ class Bop(tf.keras.optimizers.Optimizer):
         config = {
             "threshold": self._serialize_hyperparameter("threshold"),
             "gamma": self._serialize_hyperparameter("gamma"),
+            "gamma2": self._serialize_hyperparameter("gamma2"),
             "fp_optimizer": {
                 "class_name": fp_optimizer_config["name"],
                 "config": fp_optimizer_config,

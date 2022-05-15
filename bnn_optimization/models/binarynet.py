@@ -78,6 +78,7 @@ class bop(default):
     kernel_constraint = None
     threshold = 1e-6
     gamma = 1e-3
+    gamma2 = 10e-4
 
     @property
     def optimizer(self):
@@ -85,17 +86,19 @@ class bop(default):
             fp_optimizer=tf.keras.optimizers.Adam(0.01),
             threshold=self.threshold,
             gamma=self.gamma,
+            gamma2=self.gamma2,
         )
 
 
 @registry.register_hparams(binarynet)
 class bop_sec52(default):
     epochs = 500
-    batch_size = 50
+    batch_size = 512
     kernel_quantizer = None
     kernel_constraint = None
-    threshold = 1e-8
-    gamma = 1e-4
+    threshold = 20e-2
+    gamma = 20e-4
+    gamma2 = 10e-4
     gamma_decay = 0.1
     decay_step = int((50000 / 50) * 100)
 
@@ -107,4 +110,5 @@ class bop_sec52(default):
             gamma=tf.keras.optimizers.schedules.ExponentialDecay(
                 self.gamma, self.decay_step, self.gamma_decay, staircase=True
             ),
+            gamma2=self.gamma2,
         )
