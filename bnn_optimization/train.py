@@ -2,6 +2,16 @@ from zookeeper import cli, build_train
 from os import path
 import click
 from bnn_optimization import utils
+import tensorflow as tf
+import os
+
+
+# initialize local TPUs
+os.environ['TPU_NAME'] = 'local'
+resolver = tf.distribute.cluster_resolver.TPUClusterResolver()
+tf.config.experimental_connect_to_cluster(resolver)
+tf.tpu.experimental.initialize_tpu_system(resolver)
+strategy = tf.distribute.TPUStrategy(resolver)
 
 
 @cli.command()
@@ -35,7 +45,7 @@ def train(build_model, dataset, hparams, output_dir, tensorboard):
         train_data = dataset.train_data(hparams.batch_size)
         validation_data = dataset.validation_data(hparams.batch_size)
 
-    with utils.get_distribution_scope(hparams.batch_size):
+    with strategy.scope():
         model = build_model(hparams, **dataset.preprocessing.kwargs)
         model.compile(
             optimizer=hparams.optimizer,
