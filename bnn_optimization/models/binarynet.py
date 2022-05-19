@@ -93,11 +93,11 @@ class bop(default):
 @registry.register_hparams(binarynet)
 class bop_sec52(default):
     epochs = 500
-    batch_size = 512
+    batch_size = 50
     kernel_quantizer = None
     kernel_constraint = None
-    threshold = 20e-2
-    gamma = 20e-4
+    threshold = 1e-2
+    gamma = 1e-4
     gamma2 = 10e-4
     gamma_decay = 0.1
     decay_step = int((50000 / 50) * 100)
