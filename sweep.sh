@@ -9,9 +9,9 @@ COMMAND="
 	pip install -e . &&
 	for tau in {0.2e-2,1e-2,5e-2}
 	do
-		for gamma1 in {0.2e-4,1e-4,1e-3,1e-2}
+		for gamma2 in {0.2e-4,0.2e-3,1e-3,5e-3}
 		do
-			/home/yichi/.local/bin/bnno train binarynet --dataset cifar10 --preprocess-fn resize_and_flip --hparams-set bop_sec52 --hparams threshold=\$tau,gamma=\$gamma1 2>&1 | tee -a /home/yichi/log/training_log_tau\$tau_g1_\$gamma1.txt
+			/home/yichi/.local/bin/bnno train binarynet --dataset cifar10 --preprocess-fn resize_and_flip --hparams-set bop_sec52 --hparams threshold=\$tau,gamma2=\$gamma2 2>&1 | tee -a /home/yichi/log/training_log_tau\$tau_g2_\$gamma2.txt
 		done
 	done
 "
