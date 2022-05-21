@@ -3,6 +3,7 @@ VM_NAME=v2vm$1
 ZONE=us-central1-f
 TMUX_SESSION=bop
 FOLDER=rethinking-bnn-optimization
+LOCAL_WORK_DIR=/home/yichi/work_dir
 COMMAND="
 	mkdir log &&
 	cd rethinking-bnn-optimization &&
@@ -11,7 +12,7 @@ COMMAND="
 	do
 		for gamma2 in {0.2e-4,0.2e-3,1e-3,5e-3}
 		do
-			/home/yichi/.local/bin/bnno train binarynet --dataset cifar10 --preprocess-fn resize_and_flip --hparams-set bop_sec52 --hparams threshold=\$tau,gamma2=\$gamma2 2>&1 | tee -a /home/yichi/log/training_log_tau\$tau_g2_\$gamma2.txt
+			/home/yichi/.local/bin/bnno train binarynet --dataset cifar10 --preprocess-fn resize_and_flip --hparams-set bop_sec52 --hparams threshold=\${tau},gamma2=\${gamma2} --output-dir $LOCAL_WORK_DIR/adabop_tau\${tau}_g2_\${gamma2} 2>&1 | tee -a /home/yichi/log/training_log_tau\${tau}_g2_\${gamma2}.txt
 		done
 	done
 "
